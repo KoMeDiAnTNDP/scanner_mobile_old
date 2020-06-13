@@ -1,5 +1,3 @@
-import 'package:image_picker/image_picker.dart';
-
 import 'package:scanner_mobile/src/shared/models/categories/categories_images_response.dart';
 import 'package:scanner_mobile/src/shared/models/categories/categories_list_response.dart';
 import 'package:scanner_mobile/src/shared/models/http/http_method.dart';
@@ -40,7 +38,7 @@ class CategoriesService implements ICategoriesService {
   }
 
   @override
-  Future<void> uploadDocuments(List<PickedFile> files) async {
+  Future<void> uploadDocuments(List<List<int>> files) async {
     Map body = {
       'files': files
     };
@@ -48,7 +46,8 @@ class CategoriesService implements ICategoriesService {
       HttpMethod.POST,
       ICategoriesService.UPLOAD_DOCUMENTS_PATH,
       token: this.token,
-      body: body
+      body: body,
+      isMultipart: true
     );
   }
 }

@@ -18,14 +18,12 @@ class AuthorizationBloc extends Bloc {
   final StreamController<FormFieldModel> _emailFieldModelController = StreamController<FormFieldModel>.broadcast();
   final StreamController<FormFieldModel> _passwordFieldModelController = StreamController<FormFieldModel>.broadcast();
   final StreamController<FormFieldModel> _usernameFieldModelController = StreamController<FormFieldModel>.broadcast();
-  final StreamController<String> _serverErrorController = StreamController<String>.broadcast();
   final StreamController<bool> _validationFormController = StreamController<bool>.broadcast();
 
   Stream<bool> get screenModeStream => _screenModeController.stream;
   Stream<FormFieldModel> get emailFieldModelStream => _emailFieldModelController.stream;
   Stream<FormFieldModel> get passwordFieldModelStream => _passwordFieldModelController.stream;
   Stream<FormFieldModel> get usernameFieldModelStream => _usernameFieldModelController.stream;
-  Stream<String> get serverErrorStream => _serverErrorController.stream;
   Stream<bool> get validationFormStream => _validationFormController.stream;
 
   final AuthorizationService _authorizationService = AuthorizationService();
@@ -87,20 +85,25 @@ class AuthorizationBloc extends Bloc {
   }
 
   void signIn(TokenBloc tokenBloc) async {
+    startLoading();
     ResponseWithError<TokenResponse> tokenResponse = await _authorizationService.signIn(
       emailFieldModel.value,
       passwordFieldModel.value
     );
 
     if (tokenResponse.errorMessage != null) {
-      _serverErrorController.sink.add(tokenResponse.errorMessage);
+      showError('Sign In', description: tokenResponse.errorMessage);
+      stopLoading();
+
       return;
     }
 
     _setToken(tokenBloc, tokenResponse.response.token);
+    stopLoading();
   }
 
   void signUp(TokenBloc tokenBloc) async {
+    startLoading();
     ResponseWithError<TokenResponse> tokenResponse = await _authorizationService.signUp(
       emailFieldModel.value,
       passwordFieldModel.value,
@@ -108,12 +111,13 @@ class AuthorizationBloc extends Bloc {
     );
 
     if (tokenResponse.errorMessage != null) {
-      _serverErrorController.sink.add(tokenResponse.errorMessage);
+      showError('Sign Up', description: tokenResponse.errorMessage);
 
       return;
     }
 
     _setToken(tokenBloc, tokenResponse.response.token);
+    stopLoading();
   }
 
   @override
@@ -124,7 +128,6 @@ class AuthorizationBloc extends Bloc {
     _emailFieldModelController.close();
     _passwordFieldModelController.close();
     _usernameFieldModelController.close();
-    _serverErrorController.close();
     _validationFormController.close();
   }
 }

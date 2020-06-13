@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:multi_image_picker/multi_image_picker.dart';
 
 import 'package:scanner_mobile/src/shared/bloc/base/bloc.dart';
 import 'package:scanner_mobile/src/shared/models/categories/categories_images_response.dart';
@@ -11,17 +8,15 @@ import 'package:scanner_mobile/src/shared/models/http/response.dart';
 import 'package:scanner_mobile/src/shared/service/categories/categories_service.dart';
 
 class CategoryBloc extends Bloc {
-  final _picker = ImagePicker();
-  PickedFile _file;
-  final List<Asset> _filesFromGallery = <Asset>[];
-
   CategoryBlocModel categoryBlocModel;
 
   final StreamController<CategoryBlocModel> _categoryBlocModelController = StreamController<CategoryBlocModel>.broadcast();
-  final StreamController<String> _serverErrorController = StreamController<String>.broadcast();
+  final StreamController<bool> _listLoadingController = StreamController<bool>.broadcast();
+  final StreamController<String> _detailViewController = StreamController<String>.broadcast();
 
   Stream<CategoryBlocModel> get categoryBlocModelStream => _categoryBlocModelController.stream;
-  Stream<String> get serverErrorStream => _serverErrorController.stream;
+  Stream<bool> get listLoadingStream => _listLoadingController.stream;
+  Stream<String> get detailViewStream => _detailViewController.stream;
 
   CategoriesService _categoriesService;
 
@@ -30,40 +25,28 @@ class CategoryBloc extends Bloc {
     _categoriesService = CategoriesService(token);
   }
 
-  void chooseImagesFromGallery(BuildContext context) async {
-    List<Asset> resultList = <Asset>[];
-
-    try {
-      resultList = await MultiImagePicker.pickImages(
-        maxImages: 10,
-        enableCamera: true,
-        selectedAssets: _filesFromGallery,
-        cupertinoOptions: CupertinoOptions(takePhotoIcon: 'chat'),
-        materialOptions: MaterialOptions(
-          actionBarColor: Theme.of(context).primaryColor.toString(),
-          actionBarTitle: 'Images',
-          allViewTitle: 'All Photos',
-          useDetailsView: false,
-          selectCircleStrokeColor: '#000000'
-        )
-      );
-    } on Exception catch(e) {
-      print(e.toString());
-    }
-  }
-
-  void getImages() async {
+  Future<void> getImages() async {
+    _listLoadingController.sink.add(true);
     ResponseWithError<CategoryImagesResponse> imagesResponse =
       await _categoriesService.getImages(categoryBlocModel.categoryModel.id);
 
     if (imagesResponse.errorMessage != null) {
-      _serverErrorController.sink.add(imagesResponse.errorMessage);
+      showError(imagesResponse.errorMessage);
 
       return;
     }
 
     categoryBlocModel.categoryImages = [...imagesResponse.response.categoryImages];
     _categoryBlocModelController.sink.add(categoryBlocModel);
+    _listLoadingController.sink.add(false);
+  }
+
+  void openDetailView(String imageUrl) {
+    _detailViewController.sink.add(imageUrl);
+  }
+
+  void closeDetailView() {
+    _detailViewController.sink.add(null);
   }
 
   @override
@@ -71,6 +54,7 @@ class CategoryBloc extends Bloc {
     super.dispose();
 
     _categoryBlocModelController.close();
-    _serverErrorController.close();
+    _listLoadingController.close();
+    _detailViewController.close();
   }
 }

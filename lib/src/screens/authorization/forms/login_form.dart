@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:scanner_mobile/src/screens/authorization/common/authorization_button.dart';
 import 'package:scanner_mobile/src/screens/authorization/common/form_field.dart';
 import 'package:scanner_mobile/src/shared/bloc/authorization/authorization_bloc.dart';

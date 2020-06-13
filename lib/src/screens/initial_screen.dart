@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'package:scanner_mobile/src/screens/authorization/authorization_screen.dart';
 import 'package:scanner_mobile/src/screens/home/home_screen.dart';
-
 import 'package:scanner_mobile/src/shared/bloc/base/provider_bloc.dart';
 import 'package:scanner_mobile/src/shared/bloc/token/token_bloc.dart';
 

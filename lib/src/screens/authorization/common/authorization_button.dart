@@ -30,7 +30,10 @@ class AuthorizationButton extends StatelessWidget {
             color: Colors.lightBlueAccent,
             disabledColor: Colors.grey.withOpacity(.5),
             child: Text(title, style: TextStyle(color: Colors.white)),
-            onPressed: isFormValid ? onPressed : null
+            onPressed: isFormValid ? () {
+              FocusScope.of(context).requestFocus(FocusNode());
+              onPressed();
+            }: null
           )
         );
       }

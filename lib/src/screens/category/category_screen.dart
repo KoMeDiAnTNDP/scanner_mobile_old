@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:scanner_mobile/src/screens/category/detail_view/detail_view.dart';
 import 'package:scanner_mobile/src/shared/bloc/base/provider_bloc.dart';
 import 'package:scanner_mobile/src/shared/bloc/category/category_bloc.dart';
 import 'package:scanner_mobile/src/shared/models/categories/category_model.dart';
@@ -7,11 +9,13 @@ import 'package:scanner_mobile/src/shared/models/category/category_bloc_model.da
 class CategoryScreen extends StatelessWidget {
   final CategoryModel categoryModel;
   final String token;
+  final VoidCallback onWilPop;
 
   const CategoryScreen({
     Key key,
-    this.categoryModel,
-    this.token
+    @required this.categoryModel,
+    @required this.token,
+    @required this.onWilPop
   }): super(key: key);
 
   Widget _createBody(BuildContext context, List<String> imageUrls, CategoryBloc bloc) {
@@ -19,46 +23,11 @@ class CategoryScreen extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       padding: EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 0.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 10.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.only(right: 10.0),
-                  child: RaisedButton(
-                    elevation: 5.0,
-                    child: Text('Camera'),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(13.0)
-                    ),
-                    color: Colors.grey,
-                    onPressed: () {}
-                  )
-                ),
-                RaisedButton(
-                  elevation: 5.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13.0)
-                  ),
-                  color: Colors.grey,
-                  child: Text('Gallery'),
-                  onPressed: () => bloc.chooseImagesFromGallery(context)
-                )
-              ]
-            )
-          ),
-          _buildImagesLayout(context, imageUrls)
-        ]
-      )
+      child: _buildImagesLayout(context, imageUrls, bloc)
     );
   }
 
-  Widget _buildImagesLayout(BuildContext context, List<String> imageUrls) {
+  Widget _buildImagesLayout(BuildContext context, List<String> imageUrls, CategoryBloc bloc) {
     Orientation orientation = MediaQuery.of(context).orientation;
 
     return GridView.builder(
@@ -70,8 +39,22 @@ class CategoryScreen extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return GestureDetector(
           child: Card(
-            child: Image.network(imageUrls[index])
+            child: Image.network(
+              imageUrls[index],
+              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+
+                return Container(
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+            )
           ),
+          onTap: () => bloc.openDetailView(imageUrls[index])
         );
       },
       itemCount: imageUrls.length,
@@ -88,15 +71,48 @@ class CategoryScreen extends StatelessWidget {
       child: StreamBuilder<CategoryBlocModel>(
         stream: bloc.categoryBlocModelStream,
         initialData: bloc.categoryBlocModel,
-        builder: (context, snapshot) {
-          CategoryBlocModel categoryBlocModel = snapshot.data;
+        builder: (context, snapshotCategoryModel) {
+          CategoryBlocModel categoryBlocModel = snapshotCategoryModel.data;
 
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(categoryModel.name),
-              centerTitle: true
-            ),
-            body: _createBody(context, categoryBlocModel.categoryImages, bloc)
+          return StreamBuilder<bool>(
+            stream: bloc.listLoadingStream,
+            initialData: true,
+            builder: (context, snapshotListLoading) {
+              bool isListLoading = snapshotListLoading.data;
+
+              return StreamBuilder<String>(
+                stream: bloc.detailViewStream,
+                builder: (context, snapshotDetailView) {
+                  String imageUrl = snapshotDetailView.data;
+                  Widget detailView = imageUrl != null ?
+                    DetailView(imageUrl: imageUrl, bloc: bloc) :
+                    Container(width: 0, height: 0);
+
+
+                  return Stack(
+                    children: [
+                      WillPopScope(
+                        onWillPop: () async {
+                          onWilPop();
+
+                          return true;
+                        },
+                        child: Scaffold(
+                          appBar: AppBar(
+                            title: Text(categoryModel.name),
+                            centerTitle: true
+                          ),
+                          body: isListLoading ?
+                            BlocProvider.createLoadingContainer() :
+                            _createBody(context, categoryBlocModel.categoryImages, bloc)
+                        )
+                      ),
+                      detailView
+                    ]
+                  );
+                }
+              );
+            }
           );
         }
       )

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:scanner_mobile/src/shared/models/form_field/form_field_model.dart';
 
 class AuthorizationField extends StatelessWidget {
@@ -30,6 +31,10 @@ class AuthorizationField extends StatelessWidget {
     FocusScope.of(context).requestFocus(nextFocus);
   }
 
+  void _focusDone(BuildContext context) {
+    FocusScope.of(context).requestFocus(FocusNode());
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FormFieldModel>(
@@ -51,7 +56,7 @@ class AuthorizationField extends StatelessWidget {
           focusNode: currentFocus,
           obscureText: isPassword,
           textInputAction: nextFocus != null ? TextInputAction.next : TextInputAction.done,
-          onFieldSubmitted: nextFocus != null ? (value) => _changeFocus(value, context) : null
+          onFieldSubmitted: nextFocus != null ? (value) => _changeFocus(value, context) : (value) => _focusDone(context)
         );
       }
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'package:scanner_mobile/src/screens/authorization/forms/login_form.dart';
-import 'package:scanner_mobile/src/screens/authorization/forms/regisatration_form.dart';
+import 'package:scanner_mobile/src/screens/authorization/forms/registration_form.dart';
 import 'package:scanner_mobile/src/shared/bloc/authorization/authorization_bloc.dart';
 import 'package:scanner_mobile/src/shared/bloc/base/provider_bloc.dart';
 import 'package:scanner_mobile/src/shared/bloc/token/token_bloc.dart';

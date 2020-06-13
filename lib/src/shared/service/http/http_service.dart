@@ -11,7 +11,7 @@ import 'package:scanner_mobile/src/shared/models/http/token_response.dart';
 
 class HttpService {
   static const String PROTOCOL = 'https';
-  static const String HOST = 'ede65a6fc293.ngrok.io';
+  static const String HOST = '5377f1a5aa1d.ngrok.io';
   static Map<String, String> authHeaders(String token) => {
     'Authorization': 'Bearer $token'
   };
@@ -25,23 +25,28 @@ class HttpService {
       String path, {
         String token,
         Map body,
-        Map<String, String> params
+        Map<String, String> params,
+        bool isMultipart = false
       }) async {
     String url = _makeUrl(path, params: params);
-    Response response;
+    dynamic response;
 
     switch (method) {
       case HttpMethod.GET:
         response = await _makeGetRequest(url, token: token);
         break;
       case HttpMethod.POST:
-        response = await _makePostRequest(url, body, token: token);
+        response = await _makePostRequest(url, body, isMultipart, token: token);
         break;
     }
 
     ResponseWithError<TResponse> result;
 
     if (response.statusCode == HttpStatus.ok) {
+      if (isMultipart) {
+        return null;
+      }
+
       Map jsonResponse = convert.jsonDecode(response.body);
 
       switch (TResponse) {
@@ -84,11 +89,42 @@ class HttpService {
     return response;
   }
 
-  Future<Response> _makePostRequest(String url, Map body, {String token}) async {
+  Future<dynamic> _makePostRequest(
+      String url,
+      Map body,
+      bool isMultipart, {
+        String token
+      }) async {
     Map<String, String> headers = token != null ? authHeaders(token) : DEFAULT_HEADERS;
+
+    if (isMultipart) {
+      StreamedResponse streamedResponse = await _sendFile(url, body['files'], headers);
+
+      return streamedResponse;
+    }
+
     Response response = await post(url, headers: headers, body: convert.jsonEncode(body));
 
     return response;
+  }
+
+  Future<StreamedResponse> _sendFile(
+      String url,
+      List<List<int>> listBytes,
+      Map<String, String> authHeaders
+      ) async {
+    MultipartRequest request = MultipartRequest('POST', Uri.parse(url));
+    request.headers['Authorization'] = authHeaders['Authorization'];
+
+    for (int i = 0; i < listBytes.length; i++) {
+      List<int> bytes = listBytes[i];
+      MultipartFile multipartFile = MultipartFile.fromBytes('files', bytes, filename: 'image$i');
+      request.files.add(multipartFile);
+    }
+
+    StreamedResponse streamedResponse = await request.send();
+
+    return streamedResponse;
   }
 
   String _makeUrl(String path, {Map<String, String> params}) {
