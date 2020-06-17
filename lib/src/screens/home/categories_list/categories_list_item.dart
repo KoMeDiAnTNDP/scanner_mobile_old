@@ -18,9 +18,10 @@ class CategoriesListItem extends StatelessWidget {
       width: double.infinity,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           CircleAvatar(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).canvasColor,
             child: SvgPicture.asset(image)
           ),
           Padding(

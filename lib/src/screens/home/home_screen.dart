@@ -46,7 +46,6 @@ class HomeScreen extends StatelessWidget {
     }
 
     return Container(
-      color: Colors.white,
       child: Center(
         child: Text('You have no uploaded documents yet')
       )

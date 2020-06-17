@@ -11,7 +11,7 @@ import 'package:scanner_mobile/src/shared/models/http/token_response.dart';
 
 class HttpService {
   static const String PROTOCOL = 'https';
-  static const String HOST = '5377f1a5aa1d.ngrok.io';
+  static const String HOST = '7588b420503b.ngrok.io';
   static Map<String, String> authHeaders(String token) => {
     'Authorization': 'Bearer $token'
   };

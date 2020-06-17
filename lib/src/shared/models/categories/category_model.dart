@@ -1,4 +1,4 @@
-class CategoryModel {
+class CategoryModel implements Comparable<CategoryModel> {
   final int id;
   final String name;
 
@@ -13,5 +13,10 @@ class CategoryModel {
       id: data['id'],
       name: data['name']
     );
+  }
+
+  @override
+  int compareTo(CategoryModel other) {
+    return this.name.compareTo(other.name);
   }
 }
